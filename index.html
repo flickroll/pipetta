@@ -5,10 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pipetta">
-<meta name="theme-color" content="#DFE8EA" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0F181D" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#070A2B">
 <style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -18,38 +17,33 @@
 <style>
 /* Layout: one fixed screen. Slim header (wordmark, level stepper, move count), the rack of tubes fills the middle, three thumb-reach actions at the bottom. */
 :root {
-  --bg: #DFE8EA;
-  --dot: #C3D0D4;
-  --panel: #F4F8F8;
-  --ink: #15242C;
-  --muted: #586B75;
-  --glass: rgba(255, 255, 255, .6);
-  --shine: rgba(255, 255, 255, .45);
-  --hatch-a: #9FB0B7;
-  --hatch-b: #B7C5CA;
-  --on-ink: #F4F8F8;
-  --scrim: rgba(21, 36, 44, .45);
+  --bg: #070A2B;
+  --glow: #1A2472;
+  --dot: #2A3384;
+  --panel: #141A56;
+  --ink: #EEF1FF;
+  --muted: #9AA4DA;
+  --rim: #6E9DEB;
+  --glass: rgba(9, 12, 46, .7);
+  --shine: rgba(255, 255, 255, .16);
+  --hatch-a: #262E72;
+  --hatch-b: #323B88;
+  --seal-a: #1D3767;
+  --seal-b: #26467F;
+  --on-ink: #0B0F3A;
+  --scrim: rgba(3, 5, 25, .72);
   --display: "Unbounded", "Avenir Next", "Segoe UI", sans-serif;
   --body: "DM Sans", -apple-system, "Helvetica Neue", Arial, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0F181D; --dot: #1E2C33; --panel: #1A262D; --ink: #E6EFF1; --muted: #8DA0AA;
-    --glass: rgba(255, 255, 255, .07); --shine: rgba(255, 255, 255, .16);
-    --hatch-a: #33444D; --hatch-b: #41545E; --on-ink: #0F181D; --scrim: rgba(0, 0, 0, .6);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0F181D; --dot: #1E2C33; --panel: #1A262D; --ink: #E6EFF1; --muted: #8DA0AA;
-  --glass: rgba(255, 255, 255, .07); --shine: rgba(255, 255, 255, .16);
-  --hatch-a: #33444D; --hatch-b: #41545E; --on-ink: #0F181D; --scrim: rgba(0, 0, 0, .6);
   color-scheme: dark;
 }
 
 html, body { height: 100%; }
 body {
-  background: var(--bg) radial-gradient(var(--dot) 1.2px, transparent 1.3px) 0 0 / 22px 22px;
+  background:
+    radial-gradient(var(--dot) 1px, transparent 1.4px) 11px 7px / 97px 131px,
+    radial-gradient(var(--dot) 1.3px, transparent 1.7px) 53px 71px / 149px 113px,
+    radial-gradient(120% 55% at 50% 100%, var(--glow), transparent 70%),
+    var(--bg);
   color: var(--ink);
   font-family: var(--body);
   display: flex; flex-direction: column;
@@ -91,22 +85,31 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
   transform-origin: 50% 0;
   transition: transform .18s cubic-bezier(.3, .7, .3, 1);
 }
-.tube::before { /* lip */
-  content: ""; position: absolute; z-index: 2; top: -3px; left: -5px; right: -5px; height: 6px;
-  background: var(--ink); border-radius: 3px;
+.tube::before { /* rim of the neck */
+  content: ""; position: absolute; z-index: 2; top: 0; left: 19%; right: 19%; height: 7px;
+  background: var(--rim); border-radius: 4px;
+}
+.neck {
+  position: absolute; top: 4px; left: 26%; right: 26%; height: 13%; box-sizing: border-box;
+  border: 2.5px solid var(--rim); border-block: 0; background: var(--glass);
 }
 .glass {
-  position: absolute; inset: 0; box-sizing: border-box;
-  border: 3px solid var(--ink); border-top: 0;
-  border-radius: 0 0 calc(var(--tw) / 2) calc(var(--tw) / 2);
+  position: absolute; inset: 12% 0 0; box-sizing: border-box;
+  border: 2.5px solid var(--rim);
+  border-radius: calc(var(--tw) * .34) calc(var(--tw) * .34) calc(var(--tw) * .3) calc(var(--tw) * .3);
   background: var(--glass); overflow: hidden;
+  box-shadow: 0 0 14px rgba(110, 157, 235, .22);
 }
 .glass::after { /* highlight */
-  content: ""; position: absolute; z-index: 3; top: 8%; bottom: 22%; left: 14%; width: 12%;
-  border-radius: 99px; background: var(--shine); pointer-events: none;
+  content: ""; position: absolute; z-index: 3; top: 9%; bottom: 14%; left: 12%; width: 13%;
+  border-radius: 99px; background: linear-gradient(var(--shine), transparent); pointer-events: none;
 }
-.liq { position: absolute; inset: 0; display: flex; flex-direction: column-reverse; }
-.unit { flex: none; height: 25%; background: var(--c); }
+.liq { position: absolute; inset: 14% 0 0; display: flex; flex-direction: column-reverse; }
+.unit { position: relative; flex: none; height: 25%; background: linear-gradient(90deg, color-mix(in srgb, var(--c), #000 22%), var(--c) 30%, var(--c) 70%, color-mix(in srgb, var(--c), #000 28%)); }
+.unit:last-child::before { /* surface of the topmost layer */
+  content: ""; position: absolute; left: 0; right: 0; top: calc(var(--tw) * -.09); height: calc(var(--tw) * .18);
+  border-radius: 50%; background: color-mix(in srgb, var(--c), #fff 32%);
+}
 .unit.grow { animation: grow .22s linear both; }
 .unit.shrink { animation: grow .22s linear reverse both; }
 @keyframes grow { from { height: 0; } to { height: 25%; } }
@@ -115,13 +118,14 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
   display: grid; place-items: center;
   box-shadow: inset 0 2px 0 var(--bg);
 }
-.unit.hid::after { content: "?"; font-family: var(--display); font-weight: 700; font-size: calc(var(--tw) * .34); color: var(--ink); opacity: .7; }
+.unit.hid:last-child::before { background: var(--hatch-b); }
+.unit.hid::after { content: "?"; font-family: var(--display); font-weight: 700; font-size: calc(var(--tw) * .34); color: var(--ink); opacity: .7; position: relative; }
 .stream { position: absolute; z-index: 1; top: 0; left: 50%; width: 7px; margin-left: -3.5px; border-radius: 0 0 4px 4px; background: var(--c); height: 0; }
 
 .tube.sel { transform: translateY(-16px); }
 .tube.pour { z-index: 5; transition: transform .2s cubic-bezier(.4, 0, .2, 1); }
 .tube.done::after { /* stopper */
-  content: ""; position: absolute; z-index: 4; left: 50%; top: -13px; width: 62%; height: 14px; margin-left: -31%;
+  content: ""; position: absolute; z-index: 4; left: 50%; top: -9px; width: 44%; height: 15px; margin-left: -22%;
   background: var(--ink); border-radius: 5px 5px 2px 2px;
   animation: plug .3s cubic-bezier(.3, 1.6, .5, 1) both;
 }
@@ -130,22 +134,22 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 /* sealed tube: contents covered until enough tubes are finished */
 .seal {
   position: absolute; inset: 0; z-index: 4; display: grid; place-items: center;
-  background: repeating-linear-gradient(45deg, var(--ink) 0 9px, var(--muted) 9px 18px);
+  background: repeating-linear-gradient(45deg, var(--seal-a) 0 9px, var(--seal-b) 9px 18px);
 }
 .seal span {
   width: 74%; aspect-ratio: 1; border-radius: 50%; background: var(--panel); color: var(--ink);
   display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: calc(var(--tw) * .36);
-  box-shadow: 0 0 0 3px var(--ink);
+  box-shadow: 0 0 0 3px var(--rim);
 }
 .tube.shake { animation: shake .3s; }
 @keyframes shake { 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-3px); } }
 .tube.hint .glass { animation: hint 1s ease-in-out infinite; }
-@keyframes hint { 50% { box-shadow: 0 0 0 6px var(--ink); } }
+@keyframes hint { 50% { box-shadow: 0 0 0 6px var(--ink), 0 0 24px var(--ink); } }
 
 /* actions */
 .actions { flex: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .actions button {
-  height: 52px; border-radius: 16px; background: var(--panel); box-shadow: inset 0 0 0 2px var(--ink);
+  height: 52px; border-radius: 16px; background: var(--panel); box-shadow: inset 0 0 0 2px var(--rim);
   display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px;
 }
 .actions button:active { transform: translateY(1px); }
@@ -330,11 +334,11 @@ function persist() { store.set({ maxLevel, state: S }); }
 
 /* ---------- rendering ---------- */
 function layout() {
-  const n = S.tubes.length, rows = n <= 5 ? 1 : 2, per = Math.ceil(n / rows);
+  const n = S.tubes.length, rows = Math.ceil(n / 5), per = Math.ceil(n / rows);
   const W = board.clientWidth, H = board.clientHeight;
-  const cg = per >= 6 ? 12 : 16, rg = 40;
-  const tw = Math.floor(Math.min(62, (W - cg * (per - 1) - 10) / per));
-  const th = Math.floor(Math.min(tw * 3.5, (H - rg * (rows - 1) - 50) / rows));
+  const cg = 16, rg = 38;
+  const tw = Math.floor(Math.min(58, (W - cg * (per - 1) - 10) / per));
+  let th = Math.floor(Math.min(tw * 3.3, (H - rg * (rows - 1) - 50) / rows));
   board.style.setProperty('--tw', tw + 'px');
   board.style.setProperty('--th', th + 'px');
   board.style.setProperty('--cg', cg + 'px');
@@ -344,7 +348,7 @@ function layout() {
     const row = document.createElement('div'); row.className = 'row';
     for (let i = r * per; i < Math.min(n, (r + 1) * per); i++) {
       const slot = document.createElement('div'); slot.className = 'slot';
-      slot.innerHTML = '<button type="button" class="tube" data-i="' + i + '"><span class="glass"><span class="liq"></span><span class="stream"></span></span></button>';
+      slot.innerHTML = '<button type="button" class="tube" data-i="' + i + '"><span class="neck"></span><span class="glass"><span class="liq"></span><span class="stream"></span></span></button>';
       row.appendChild(slot);
     }
     board.appendChild(row);
@@ -360,7 +364,7 @@ function unitEl(x) {
 function render() {
   const dc = done();
   S.tubes.forEach((t, i) => {
-    const el = tubeEl(i), glass = el.firstChild, liq = glass.firstChild;
+    const el = tubeEl(i), glass = el.querySelector('.glass'), liq = glass.firstChild;
     liq.replaceChildren(...t.u.map(unitEl));
     const lk = locked(t, dc);
     let seal = glass.querySelector('.seal');

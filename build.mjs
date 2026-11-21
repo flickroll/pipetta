@@ -8,10 +8,9 @@ const head = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pipetta">
-<meta name="theme-color" content="#DFE8EA" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0F181D" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#070A2B">
 <style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
