@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pipetta">
+<meta name="theme-color" content="#DFE8EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F181D" media="(prefers-color-scheme: dark)">
+<style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Pipetta</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: one fixed screen. Slim header (wordmark, level stepper, move count), the rack of tubes fills the middle, three thumb-reach actions at the bottom. */
+:root {
+  --bg: #DFE8EA;
+  --dot: #C3D0D4;
+  --panel: #F4F8F8;
+  --ink: #15242C;
+  --muted: #586B75;
+  --glass: rgba(255, 255, 255, .6);
+  --shine: rgba(255, 255, 255, .45);
+  --hatch-a: #9FB0B7;
+  --hatch-b: #B7C5CA;
+  --on-ink: #F4F8F8;
+  --scrim: rgba(21, 36, 44, .45);
+  --display: "Unbounded", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "DM Sans", -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F181D; --dot: #1E2C33; --panel: #1A262D; --ink: #E6EFF1; --muted: #8DA0AA;
+    --glass: rgba(255, 255, 255, .07); --shine: rgba(255, 255, 255, .16);
+    --hatch-a: #33444D; --hatch-b: #41545E; --on-ink: #0F181D; --scrim: rgba(0, 0, 0, .6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F181D; --dot: #1E2C33; --panel: #1A262D; --ink: #E6EFF1; --muted: #8DA0AA;
+  --glass: rgba(255, 255, 255, .07); --shine: rgba(255, 255, 255, .16);
+  --hatch-a: #33444D; --hatch-b: #41545E; --on-ink: #0F181D; --scrim: rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--bg) radial-gradient(var(--dot) 1.2px, transparent 1.3px) 0 0 / 22px 22px;
+  color: var(--ink);
+  font-family: var(--body);
+  display: flex; flex-direction: column;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px 14px;
+  box-sizing: border-box;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; touch-action: manipulation; }
+button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+/* header */
+.top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; flex: none; }
+.brand { font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+.stepper { display: flex; align-items: center; gap: 4px; }
+.stepper button { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; }
+.stepper button:disabled { opacity: .25; cursor: default; }
+.stepper svg { width: 18px; height: 18px; }
+.lvl { text-align: center; min-width: 76px; }
+.lvl small { display: block; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.lvl b { font-family: var(--display); font-size: 26px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.moves { justify-self: end; text-align: right; font-size: 12px; color: var(--muted); font-weight: 500; }
+.moves b { display: block; color: var(--ink); font-family: var(--display); font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.note { flex: none; min-height: 20px; margin-top: 6px; text-align: center; font-size: 13px; color: var(--muted); font-weight: 500; }
+
+/* rack */
+.board { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: var(--rg, 34px); }
+.row { display: flex; justify-content: center; gap: var(--cg, 14px); }
+.slot { width: var(--tw); height: var(--th); flex: none; }
+.tube {
+  position: relative; display: block; width: var(--tw); height: var(--th);
+  transform-origin: 50% 0;
+  transition: transform .18s cubic-bezier(.3, .7, .3, 1);
+}
+.tube::before { /* lip */
+  content: ""; position: absolute; z-index: 2; top: -3px; left: -5px; right: -5px; height: 6px;
+  background: var(--ink); border-radius: 3px;
+}
+.glass {
+  position: absolute; inset: 0; box-sizing: border-box;
+  border: 3px solid var(--ink); border-top: 0;
+  border-radius: 0 0 calc(var(--tw) / 2) calc(var(--tw) / 2);
+  background: var(--glass); overflow: hidden;
+}
+.glass::after { /* highlight */
+  content: ""; position: absolute; z-index: 3; top: 8%; bottom: 22%; left: 14%; width: 12%;
+  border-radius: 99px; background: var(--shine); pointer-events: none;
+}
+.liq { position: absolute; inset: 0; display: flex; flex-direction: column-reverse; }
+.unit { flex: none; height: 25%; background: var(--c); }
+.unit.grow { animation: grow .22s linear both; }
+.unit.shrink { animation: grow .22s linear reverse both; }
+@keyframes grow { from { height: 0; } to { height: 25%; } }
+.unit.hid {
+  background: repeating-linear-gradient(135deg, var(--hatch-a) 0 6px, var(--hatch-b) 6px 12px);
+  display: grid; place-items: center;
+  box-shadow: inset 0 2px 0 var(--bg);
+}
+.unit.hid::after { content: "?"; font-family: var(--display); font-weight: 700; font-size: calc(var(--tw) * .34); color: var(--ink); opacity: .7; }
+.stream { position: absolute; z-index: 1; top: 0; left: 50%; width: 7px; margin-left: -3.5px; border-radius: 0 0 4px 4px; background: var(--c); height: 0; }
+
+.tube.sel { transform: translateY(-16px); }
+.tube.pour { z-index: 5; transition: transform .2s cubic-bezier(.4, 0, .2, 1); }
+.tube.done::after { /* stopper */
+  content: ""; position: absolute; z-index: 4; left: 50%; top: -13px; width: 62%; height: 14px; margin-left: -31%;
+  background: var(--ink); border-radius: 5px 5px 2px 2px;
+  animation: plug .3s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+@keyframes plug { from { transform: translateY(-14px); opacity: 0; } }
+
+/* sealed tube: contents covered until enough tubes are finished */
+.seal {
+  position: absolute; inset: 0; z-index: 4; display: grid; place-items: center;
+  background: repeating-linear-gradient(45deg, var(--ink) 0 9px, var(--muted) 9px 18px);
+}
+.seal span {
+  width: 74%; aspect-ratio: 1; border-radius: 50%; background: var(--panel); color: var(--ink);
+  display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: calc(var(--tw) * .36);
+  box-shadow: 0 0 0 3px var(--ink);
+}
+.tube.shake { animation: shake .3s; }
+@keyframes shake { 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-3px); } }
+.tube.hint .glass { animation: hint 1s ease-in-out infinite; }
+@keyframes hint { 50% { box-shadow: 0 0 0 6px var(--ink); } }
+
+/* actions */
+.actions { flex: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.actions button {
+  height: 52px; border-radius: 16px; background: var(--panel); box-shadow: inset 0 0 0 2px var(--ink);
+  display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px;
+}
+.actions button:active { transform: translateY(1px); }
+.actions button:disabled { opacity: .35; cursor: default; }
+.actions svg { width: 18px; height: 18px; flex: none; }
+
+/* win sheet */
+.win { position: fixed; inset: 0; z-index: 20; background: var(--scrim); display: grid; place-items: end center; }
+.sheet {
+  width: 100%; max-width: 460px; box-sizing: border-box; background: var(--panel); border-radius: 28px 28px 0 0;
+  padding: 28px max(24px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
+  text-align: center; animation: up .35s cubic-bezier(.2, .9, .3, 1) both;
+}
+@keyframes up { from { transform: translateY(100%); } }
+.sheet h2 { font-family: var(--display); font-weight: 700; font-size: 30px; margin: 0 0 6px; letter-spacing: -.02em; text-wrap: balance; }
+.sheet p { margin: 0 0 22px; color: var(--muted); font-size: 15px; }
+.sheet button { width: 100%; height: 56px; border-radius: 18px; background: var(--ink); color: var(--on-ink); font-weight: 700; font-size: 16px; }
+.swatches { display: flex; justify-content: center; gap: 6px; margin-bottom: 18px; }
+.swatches i { width: 14px; height: 30px; border-radius: 0 0 7px 7px; background: var(--c); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tube, .tube.pour { transition-duration: .01s; }
+  .unit.grow, .unit.shrink, .tube.done::after, .sheet, .tube.hint .glass { animation-duration: .01s; }
+}
+</style>
+
+<header class="top">
+  <div class="brand">Pipetta</div>
+  <div class="stepper">
+    <button id="prev" type="button" aria-label="Vorheriges Level"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="lvl"><small>Level</small><b id="lvl">1</b></div>
+    <button id="next" type="button" aria-label="Nächstes Level"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+  <div class="moves">Züge<b id="moves">0</b></div>
+</header>
+<div class="note" id="note" aria-live="polite"></div>
+
+<main class="board" id="board"></main>
+
+<nav class="actions">
+  <button id="undo" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 010 12"/></svg>Zurück</button>
+  <button id="restart" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.6-5.9"/><path d="M20 4v5h-5"/></svg>Neu</button>
+  <button id="hint" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9V15h7v-1.1A6 6 0 0012 3z"/></svg>Tipp</button>
+</nav>
+
+<div class="win" id="win" hidden>
+  <div class="sheet">
+    <div class="swatches" id="swatches"></div>
+    <h2>Alles sortiert</h2>
+    <p id="winText"></p>
+    <button id="nextLevel" type="button">Weiter zu Level 2</button>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const CAP = 4;
+const COLORS = ['#E5484D', '#F2913D', '#F4CF3A', '#3FAE6A', '#22B8C4', '#3B6FE0', '#8A55D8', '#EE6FB3', '#8B5E3C'];
+const $ = id => document.getElementById(id);
+const board = $('board');
+
+/* ---------- rules shared by game and solver ---------- */
+const isFull = a => a.length === CAP && a.every(c => c === a[0]);
+function doneCount(tubes, thr) {
+  let cnt = 0;
+  for (let i = 0; i < tubes.length; i++) if (!thr[i] && isFull(tubes[i])) cnt++;
+  for (;;) {
+    let c2 = 0;
+    for (let i = 0; i < tubes.length; i++) if (thr[i] <= cnt && isFull(tubes[i])) c2++;
+    if (c2 === cnt) return cnt;
+    cnt = c2;
+  }
+}
+function runLen(a) { let r = 1; while (r < a.length && a[a.length - 1 - r] === a[a.length - 1]) r++; return r; }
+
+function solve(start, thr, limit) {
+  const t = start.map(a => a.slice()), n = t.length, seen = new Set(), path = [];
+  let nodes = 0;
+  function rec() {
+    const dc = doneCount(t, thr);
+    let solved = true;
+    for (let i = 0; i < n; i++) if (t[i].length && !isFull(t[i])) { solved = false; break; }
+    if (solved) return true;
+    if (++nodes > limit) return false;
+    const key = t.map((a, i) => (thr[i] > dc ? 'L' + thr[i] + ':' : '') + a.join('')).sort().join('|');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    const mv = [];
+    for (let a = 0; a < n; a++) {
+      const A = t[a];
+      if (thr[a] > dc || !A.length || isFull(A)) continue;
+      const c = A[A.length - 1], r = runLen(A);
+      let usedEmpty = false;
+      for (let b = 0; b < n; b++) {
+        const B = t[b];
+        if (b === a || thr[b] > dc || B.length === CAP) continue;
+        if (!B.length) { if (r === A.length || usedEmpty) continue; usedEmpty = true; mv.push([a, b, 2]); }
+        else if (B[B.length - 1] === c) mv.push([a, b, r <= CAP - B.length ? 0 : 1]);
+      }
+    }
+    mv.sort((x, y) => x[2] - y[2]);
+    for (const [a, b] of mv) {
+      const k = Math.min(runLen(t[a]), CAP - t[b].length);
+      for (let i = 0; i < k; i++) t[b].push(t[a].pop());
+      path.push([a, b]);
+      if (rec()) return true;
+      path.pop();
+      for (let i = 0; i < k; i++) t[a].push(t[b].pop());
+      if (nodes > limit) return false;
+    }
+    return false;
+  }
+  return rec() ? path.slice() : null;
+}
+
+/* ---------- level generator (same level number, same puzzle) ---------- */
+function rng(a) {
+  return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function spec(L) {
+  return {
+    colors: Math.min(9, 3 + Math.floor(L / 3)),
+    hidden: L >= 5 && L % 2 === 1,
+    locks: L >= 8 ? (L % 4 === 0 ? 2 : L % 4 === 2 ? 1 : 0) : 0
+  };
+}
+function makeLevel(L) {
+  const s = spec(L);
+  for (let attempt = 0; ; attempt++) {
+    const r = rng(L * 7919 + attempt * 104729);
+    const locks = Math.max(0, s.locks - Math.floor(attempt / 20));
+    const units = [];
+    for (let c = 0; c < s.colors; c++) for (let i = 0; i < CAP; i++) units.push(c);
+    for (let i = units.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [units[i], units[j]] = [units[j], units[i]]; }
+    const tubes = [], thr = [];
+    for (let c = 0; c < s.colors; c++) { tubes.push(units.slice(c * CAP, c * CAP + CAP)); thr.push(0); }
+    tubes.push([], []); thr.push(0, 0);
+    const picked = new Set();
+    while (picked.size < locks) picked.add(Math.floor(r() * s.colors));
+    let k = 1; for (const i of picked) thr[i] = k++;
+    if (tubes.some(isFull)) continue;
+    if (!solve(tubes, thr, 40000)) continue;
+    return { tubes, thr, hidden: s.hidden };
+  }
+}
+
+/* ---------- game state ---------- */
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem('pipetta') || '{}'); } catch (e) { return {}; } },
+  set(v) { try { localStorage.setItem('pipetta', JSON.stringify(v)); } catch (e) {} }
+};
+let S = null;          // { level, tubes:[{u:[{c,h}], thr}], moves, hist:[] }
+let maxLevel = 1, sel = -1, busy = false, hintT = 0;
+
+const cols = t => t.u.map(x => x.c);
+const allCols = () => S.tubes.map(cols);
+const allThr = () => S.tubes.map(t => t.thr);
+const done = () => doneCount(allCols(), allThr());
+const locked = (t, dc) => t.thr > dc;
+
+function reveal() {
+  const dc = done();
+  for (const t of S.tubes) {
+    if (locked(t, dc) || !t.u.length) continue;
+    const top = t.u[t.u.length - 1].c;
+    for (let i = t.u.length - 1; i >= 0 && t.u[i].c === top; i--) t.u[i].h = false;
+  }
+}
+function load(L, saved) {
+  if (saved) S = saved;
+  else {
+    const lv = makeLevel(L);
+    S = { level: L, moves: 0, hist: [], tubes: lv.tubes.map((a, i) => ({ thr: lv.thr[i], u: a.map(c => ({ c, h: lv.hidden })) })) };
+    reveal();
+  }
+  sel = -1; busy = false;
+  $('win').hidden = true;
+  layout(); render(); persist();
+}
+function persist() { store.set({ maxLevel, state: S }); }
+
+/* ---------- rendering ---------- */
+function layout() {
+  const n = S.tubes.length, rows = n <= 5 ? 1 : 2, per = Math.ceil(n / rows);
+  const W = board.clientWidth, H = board.clientHeight;
+  const cg = per >= 6 ? 12 : 16, rg = 40;
+  const tw = Math.floor(Math.min(62, (W - cg * (per - 1) - 10) / per));
+  const th = Math.floor(Math.min(tw * 3.5, (H - rg * (rows - 1) - 50) / rows));
+  board.style.setProperty('--tw', tw + 'px');
+  board.style.setProperty('--th', th + 'px');
+  board.style.setProperty('--cg', cg + 'px');
+  board.style.setProperty('--rg', rg + 'px');
+  board.innerHTML = '';
+  for (let r = 0; r < rows; r++) {
+    const row = document.createElement('div'); row.className = 'row';
+    for (let i = r * per; i < Math.min(n, (r + 1) * per); i++) {
+      const slot = document.createElement('div'); slot.className = 'slot';
+      slot.innerHTML = '<button type="button" class="tube" data-i="' + i + '"><span class="glass"><span class="liq"></span><span class="stream"></span></span></button>';
+      row.appendChild(slot);
+    }
+    board.appendChild(row);
+  }
+}
+const tubeEl = i => board.querySelector('.tube[data-i="' + i + '"]');
+function unitEl(x) {
+  const d = document.createElement('span');
+  d.className = 'unit' + (x.h ? ' hid' : '');
+  d.style.setProperty('--c', COLORS[x.c]);
+  return d;
+}
+function render() {
+  const dc = done();
+  S.tubes.forEach((t, i) => {
+    const el = tubeEl(i), glass = el.firstChild, liq = glass.firstChild;
+    liq.replaceChildren(...t.u.map(unitEl));
+    const lk = locked(t, dc);
+    let seal = glass.querySelector('.seal');
+    if (lk && !seal) { seal = document.createElement('span'); seal.className = 'seal'; seal.innerHTML = '<span></span>'; glass.appendChild(seal); }
+    if (!lk && seal) seal.remove();
+    if (lk) seal.firstChild.textContent = t.thr - dc;
+    el.className = 'tube' + (i === sel ? ' sel' : '') + (!lk && isFull(cols(t)) ? ' done' : '');
+    el.style.transform = '';
+    el.setAttribute('aria-label', 'Röhrchen ' + (i + 1) + (lk ? ', versiegelt' : ''));
+  });
+  $('lvl').textContent = S.level;
+  $('moves').textContent = S.moves;
+  $('prev').disabled = S.level <= 1;
+  $('next').disabled = S.level >= maxLevel;
+  $('undo').disabled = !S.hist.length;
+  const anyLock = S.tubes.some(t => locked(t, dc));
+  const anyHid = S.tubes.some(t => t.u.some(x => x.h));
+  if (!noteT) $('note').textContent = anyLock ? 'Versiegelte Röhrchen öffnen sich nach so vielen fertigen Farben.'
+    : anyHid ? 'Verdeckte Schichten zeigen sich, sobald sie oben liegen.'
+    : S.level === 1 && !S.moves ? 'Tippe ein Röhrchen an, dann das Ziel.' : '';
+}
+let noteT = 0;
+function say(msg) {
+  $('note').textContent = msg;
+  clearTimeout(noteT);
+  noteT = setTimeout(() => { noteT = 0; render(); }, 2600);
+}
+function clearHint() { clearTimeout(hintT); board.querySelectorAll('.hint').forEach(e => e.classList.remove('hint')); }
+
+/* ---------- moves ---------- */
+function canPour(a, b) {
+  const dc = done(), A = S.tubes[a], B = S.tubes[b];
+  if (a === b || locked(A, dc) || locked(B, dc) || !A.u.length || B.u.length === CAP) return 0;
+  const ca = cols(A);
+  if (isFull(ca)) return 0;
+  if (B.u.length && B.u[B.u.length - 1].c !== ca[ca.length - 1]) return 0;
+  return Math.min(runLen(ca), CAP - B.u.length);
+}
+function shake(i) { const el = tubeEl(i); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+
+function tap(i) {
+  if (busy) return;
+  clearHint();
+  const dc = done(), t = S.tubes[i];
+  if (sel < 0) {
+    if (locked(t, dc)) { shake(i); say('Noch ' + (t.thr - dc) + ' fertige Farbe' + (t.thr - dc > 1 ? 'n' : '') + ', dann öffnet es sich.'); return; }
+    if (!t.u.length || isFull(cols(t))) return;
+    sel = i; tubeEl(i).classList.add('sel');
+    return;
+  }
+  if (i === sel) { sel = -1; tubeEl(i).classList.remove('sel'); return; }
+  const k = canPour(sel, i);
+  if (!k) {
+    shake(i);
+    tubeEl(sel).classList.remove('sel'); sel = -1;
+    if (!locked(t, dc) && t.u.length && !isFull(cols(t))) { sel = i; tubeEl(i).classList.add('sel'); }
+    return;
+  }
+  pour(sel, i, k);
+}
+
+function pour(a, b, k) {
+  busy = true; sel = -1;
+  S.hist.push(JSON.stringify(S.tubes));
+  if (S.hist.length > 300) S.hist.shift();
+  const A = S.tubes[a], B = S.tubes[b], color = COLORS[A.u[A.u.length - 1].c];
+  const before = B.u.length;
+  for (let i = 0; i < k; i++) B.u.push(A.u.pop());
+  S.moves++;
+  reveal(); persist();
+
+  const src = tubeEl(a), dst = tubeEl(b);
+  const sr = src.parentNode.getBoundingClientRect(), dr = dst.parentNode.getBoundingClientRect(), br = board.getBoundingClientRect();
+  const tw = sr.width, dir = (dr.left + tw / 2) > (br.left + br.width / 2) ? 1 : -1;
+  const dx = dr.left - sr.left + dir * tw * .1, dy = dr.top - sr.top - tw * .5 - 12;
+  src.classList.remove('sel'); src.classList.add('pour');
+  src.style.transform = 'translate(' + dx + 'px,' + dy + 'px) rotate(' + dir * 100 + 'deg)';
+
+  setTimeout(() => {
+    const sUnits = src.querySelectorAll('.unit'), dLiq = dst.querySelector('.liq'), stream = dst.querySelector('.stream');
+    for (let i = 0; i < k; i++) sUnits[sUnits.length - 1 - i].classList.add('shrink');
+    for (let i = 0; i < k; i++) { const u = unitEl({ c: 0, h: false }); u.style.setProperty('--c', color); u.classList.add('grow'); dLiq.appendChild(u); }
+    stream.style.setProperty('--c', color);
+    stream.style.height = (100 - before * 25) + '%';
+    setTimeout(() => {
+      stream.style.height = '0';
+      src.style.transform = '';
+      setTimeout(() => { busy = false; render(); checkWin(); }, 190);
+    }, 230);
+  }, 200);
+}
+
+function checkWin() {
+  if (!S.tubes.every(t => !t.u.length || isFull(cols(t)))) return;
+  if (S.level >= maxLevel) maxLevel = S.level + 1;
+  S.hist = []; persist();
+  $('swatches').innerHTML = S.tubes.filter(t => t.u.length).map(t => '<i style="--c:' + COLORS[t.u[0].c] + '"></i>').join('');
+  $('winText').textContent = 'Level ' + S.level + ' in ' + S.moves + ' Zügen gelöst.';
+  $('nextLevel').textContent = 'Weiter zu Level ' + (S.level + 1);
+  $('win').hidden = false;
+}
+
+/* ---------- controls ---------- */
+board.addEventListener('click', e => { const t = e.target.closest('.tube'); if (t) tap(+t.dataset.i); });
+$('undo').onclick = () => {
+  if (busy || !S.hist.length) return;
+  clearHint();
+  S.tubes = JSON.parse(S.hist.pop()); S.moves++; sel = -1;
+  render(); persist();
+};
+$('restart').onclick = () => { if (!busy) { clearHint(); load(S.level); } };
+$('hint').onclick = () => {
+  if (busy) return;
+  clearHint();
+  const path = solve(allCols(), allThr(), 150000);
+  if (!path || !path.length) { say('Von hier geht es nicht weiter. Nimm Züge zurück oder starte neu.'); return; }
+  if (sel >= 0) { tubeEl(sel).classList.remove('sel'); sel = -1; }
+  tubeEl(path[0][0]).classList.add('hint'); tubeEl(path[0][1]).classList.add('hint');
+  say('Gieße das eine markierte Röhrchen in das andere.');
+  hintT = setTimeout(clearHint, 4000);
+};
+$('prev').onclick = () => { if (!busy && S.level > 1) load(S.level - 1); };
+$('next').onclick = () => { if (!busy && S.level < maxLevel) load(S.level + 1); };
+$('nextLevel').onclick = () => load(S.level + 1);
+let rz = 0;
+window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!busy) { layout(); render(); } }, 120); });
+document.addEventListener('gesturestart', e => e.preventDefault());
+
+function start(data) {
+  const saved = (data && data.state) ? data : store.get();
+  maxLevel = Math.max(1, saved.maxLevel || 1);
+  if (saved.state && saved.state.tubes) load(saved.state.level, saved.state);
+  else load(maxLevel);
+  if (S.tubes.every(t => !t.u.length || isFull(cols(t)))) load(Math.max(maxLevel, S.level));
+}
+const hot = window.claude && window.claude.hot;
+if (hot && hot.snapshot) hot.snapshot(() => ({ maxLevel, state: S }));
+if (hot && hot.ready) hot.ready(start); else start(hot && hot.data);
+window.__pipetta = { solve, makeLevel, spec, tap, get S() { return S; }, load };
+})();
+</script>
+</body>
+</html>
