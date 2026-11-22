@@ -69,7 +69,9 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 /* rack */
 .board { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: var(--rg, 34px); }
 .row { display: flex; justify-content: center; gap: var(--cg, 14px); }
-.slot { width: var(--tw); height: var(--th); flex: none; }
+.slot { position: relative; width: var(--tw); height: var(--th); flex: none; }
+.num { display: none; position: absolute; left: 0; right: 0; bottom: -25px; text-align: center; font-family: var(--display); font-weight: 500; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (hover: hover) and (pointer: fine) { .num { display: block; } }
 .tube {
   position: relative; display: block; width: var(--tw); height: var(--th);
   transform-origin: 50% 0;
@@ -172,7 +174,31 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 @keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.08); } }
 
 .fx-flip .slot { transform: scaleY(-1); }
-.fx-flip .unit.hid::after, .fx-flip .seal span { transform: scaleY(-1); }
+.fx-flip .unit.hid::after, .fx-flip .seal span, .fx-flip .num { transform: scaleY(-1); }
+
+/* puppies: every layer is a pup, fur colour = liquid colour */
+.fx-pups .unit::before { display: none; }
+.fx-pups .unit:not(.hid) { border-radius: 44% 44% 14% 14% / 52% 52% 12% 12%; background: var(--c); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .2); }
+.pup { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.ear { position: absolute; top: 4%; width: 27%; height: 66%; background: color-mix(in srgb, var(--c), #000 40%); border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%; transform-origin: 50% 10%; }
+.ear.l { left: 2%; transform: rotate(10deg); }
+.ear.r { right: 2%; transform: rotate(-10deg); }
+.pe { position: absolute; top: 25%; width: 14%; aspect-ratio: 1; border-radius: 50%; background: #10122e; animation: blink 4.5s var(--bd, 0s) infinite; }
+.pe::after { content: ""; position: absolute; left: 18%; top: 14%; width: 38%; height: 38%; border-radius: 50%; background: #fff; }
+.pe.l { left: 30%; } .pe.r { right: 30%; }
+.snout { position: absolute; left: 50%; top: 45%; width: 42%; height: 42%; margin-left: -21%; border-radius: 50%; background: color-mix(in srgb, var(--c), #fff 72%); }
+.nose { position: absolute; z-index: 1; left: 50%; top: 6%; width: 38%; height: 32%; margin-left: -19%; background: #10122e; border-radius: 50% 50% 60% 60%; }
+.tongue { position: absolute; left: 50%; top: 46%; width: 30%; height: 62%; margin-left: -15%; background: #ff7a9a; border-radius: 0 0 99px 99px; transform-origin: 50% 0; transform: scaleY(.3); }
+.tube.sel .tongue, .tube.done .tongue { animation: pant .28s ease-in-out infinite alternate; }
+@keyframes pant { from { transform: scaleY(.55); } to { transform: scaleY(1.05); } }
+.tube.sel .ear.l { animation: flapl .25s ease-in-out infinite alternate; }
+.tube.sel .ear.r { animation: flapr .25s ease-in-out infinite alternate; }
+@keyframes flapl { to { transform: rotate(38deg); } }
+@keyframes flapr { to { transform: rotate(-38deg); } }
+.fx-pups .tube.done::after {
+  content: "Wuff!"; top: -6px; left: 50%; width: auto; height: auto; margin-left: 0; padding: 3px 9px; transform: translateX(-50%);
+  border-radius: 99px; font: 700 11px var(--display); color: var(--on-ink); white-space: nowrap;
+}
 
 .fx-disco::before {
   content: ""; position: absolute; z-index: -1; left: 50%; top: 50%; width: 150vmax; height: 150vmax; margin: -75vmax;
@@ -197,7 +223,7 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 @keyframes fizz { to { background-position: 3px -23px, 11px -10px; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .fx-disco::before, .fx-disco .slot, .fx-disco .glass, .fx-bubbles .unit::after, .eye { animation: none !important; }
+  .fx-disco::before, .fx-disco .slot, .fx-disco .glass, .fx-bubbles .unit::after, .eye, .pe, .tongue, .ear { animation: none !important; }
   .tube, .tube.pour { transition-duration: .01s; }
   .unit.grow, .unit.shrink, .tube.done::after, .sheet, .tube.hint .glass { animation-duration: .01s; }
 }
@@ -313,14 +339,15 @@ const TIERS = {
   hard:   { name: 'Schwer',  id: 3, pick: 1,  spec: L => ({ colors: 7 + Math.min(2, Math.floor((L - 1) / 3)), hidden: L % 3 !== 0, locks: L % 2 === 0 ? 2 : 1 }) },
   expert: { name: 'Experte', id: 4, pick: 1,  spec: L => ({ colors: 10 + Math.min(2, Math.floor((L - 1) / 3)), hidden: true, locks: L % 2 === 0 ? 3 : 2 }) },
   lab:    { name: 'Labor',   id: 5, pick: 0,  spec: L => {
-    const up = Math.min(2, Math.floor((L - 1) / 5));
+    const up = Math.min(2, Math.floor((L - 1) / 6));
     return [
+      { title: 'Welpenstapel: Sortiere die Welpen nach Fellfarbe.', colors: 5 + up, fx: ['pups'] },
       { title: 'Glubschaugen: Die Farben schauen dir beim Sortieren zu.', colors: 5 + up, fx: ['eyes'] },
       { title: 'Riesenflaschen: Hier passen sechs Schichten hinein.', colors: 4 + up, cap: 6, fx: ['eyes'] },
       { title: 'Kopfstand: Heute hängt alles von der Decke.', colors: 6 + up, fx: ['eyes', 'flip'] },
       { title: 'Zwergenparade: Viele Farben, nur drei Schichten pro Flasche.', colors: 9 + Math.min(1, up), cap: 3, fx: ['eyes'] },
       { title: 'Disco: Es sprudelt, blinkt und wackelt.', colors: 7 + Math.min(1, up), hidden: true, locks: 1, fx: ['eyes', 'disco', 'bubbles'] }
-    ][(L - 1) % 5];
+    ][(L - 1) % 6];
   } }
 };
 function makeLevel(d, L) {
@@ -376,7 +403,7 @@ function load(L, saved) {
     S = { diff, level: L, cap: lv.cap, fx: lv.fx, title: lv.title, moves: 0, hist: [], tubes: lv.tubes.map((a, i) => ({ thr: lv.thr[i], u: a.map(c => ({ c, h: lv.hidden })) })) };
     reveal();
   }
-  sel = -1; busy = false;
+  sel = -1; busy = false; kq.length = 0;
   $('win').hidden = true;
   layout(); render(); persist();
 }
@@ -402,7 +429,7 @@ function layout() {
     for (let i = r * per; i < Math.min(n, (r + 1) * per); i++) {
       const slot = document.createElement('div'); slot.className = 'slot';
       slot.style.setProperty('--sd', (-(i * 0.37) % 1.8) + 's'); slot.style.setProperty('--sr', (i % 2 ? 2.5 : -2.5) + 'deg');
-      slot.innerHTML = '<button type="button" class="tube" data-i="' + i + '"><span class="neck"></span><span class="glass"><span class="liq"></span><span class="stream"></span></span></button>';
+      slot.innerHTML = '<button type="button" class="tube" data-i="' + i + '"><span class="neck"></span><span class="glass"><span class="liq"></span><span class="stream"></span></span></button><span class="num">' + (i + 1) + '</span>';
       row.appendChild(slot);
     }
     board.appendChild(row);
@@ -413,7 +440,8 @@ function unitEl(x, face) {
   const d = document.createElement('span');
   d.className = 'unit' + (x.h ? ' hid' : '');
   d.style.setProperty('--c', COLORS[x.c]);
-  if (face) { d.innerHTML = '<i class="face"><i class="eye"><i></i></i><i class="eye"><i></i></i><i class="mouth"></i></i>'; d.style.setProperty('--bd', -((x.c * 1.3) % 4.5) + 's'); }
+  if (face === 'pup') { d.innerHTML = '<i class="pup"><i class="ear l"></i><i class="ear r"></i><i class="pe l"></i><i class="pe r"></i><i class="snout"><i class="nose"></i><i class="tongue"></i></i></i>'; d.style.setProperty('--bd', -((x.c * 1.3 + Math.random() * 3) % 4.5) + 's'); }
+  else if (face) { d.innerHTML = '<i class="face"><i class="eye"><i></i></i><i class="eye"><i></i></i><i class="mouth"></i></i>'; d.style.setProperty('--bd', -((x.c * 1.3) % 4.5) + 's'); }
   return d;
 }
 function lookAt() {
@@ -428,18 +456,18 @@ function lookAt() {
   });
 }
 function render() {
-  const dc = done(), eyes = (S.fx || []).includes('eyes');
+  const dc = done(), eyes = (S.fx || []).includes('eyes'), pups = (S.fx || []).includes('pups');
   S.tubes.forEach((t, i) => {
     const el = tubeEl(i), glass = el.querySelector('.glass'), liq = glass.firstChild;
     const lk = locked(t, dc);
-    liq.replaceChildren(...t.u.map((x, j) => unitEl(x, eyes && !lk && !x.h && (j === t.u.length - 1 || t.u[j + 1].c !== x.c))));
+    liq.replaceChildren(...t.u.map((x, j) => unitEl(x, lk || x.h ? false : pups ? 'pup' : eyes && (j === t.u.length - 1 || t.u[j + 1].c !== x.c))));
     let seal = glass.querySelector('.seal');
     if (lk && !seal) { seal = document.createElement('span'); seal.className = 'seal'; seal.innerHTML = '<span></span>'; glass.appendChild(seal); }
     if (!lk && seal) seal.remove();
     if (lk) seal.firstChild.textContent = t.thr - dc;
     el.className = 'tube' + (i === sel ? ' sel' : '') + (!lk && isFull(cols(t)) ? ' done' : '');
     el.style.transform = '';
-    el.setAttribute('aria-label', 'Röhrchen ' + (i + 1) + (lk ? ', versiegelt' : ''));
+    el.setAttribute('aria-label', 'Flasche ' + (i + 1) + (lk ? ', versiegelt' : ''));
   });
   $('lvl').textContent = S.level;
   $('moves').textContent = S.moves;
@@ -447,18 +475,64 @@ function render() {
   $('next').disabled = S.level >= prog[diff];
   document.querySelectorAll('#tiers button').forEach(b => b.setAttribute('aria-pressed', b.dataset.d === diff));
   $('undo').disabled = !S.hist.length;
-  const anyLock = S.tubes.some(t => locked(t, dc));
-  const anyHid = S.tubes.some(t => t.u.some(x => x.h));
   lookAt();
-  if (!noteT) $('note').textContent = S.title ? S.title : anyLock ? 'Versiegelte Röhrchen öffnen sich nach so vielen fertigen Farben.'
-    : anyHid ? 'Verdeckte Schichten zeigen sich, sobald sie oben liegen.'
-    : diff === 'easy' && S.level === 1 && !S.moves ? 'Tippe ein Röhrchen an, dann das Ziel.' : '';
+  if (!noteT) $('note').textContent = baseNote();
 }
+const desktop = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
+let kb = '';
+function baseNote() {
+  if (kb) return 'Eingabe: ' + kb + ' (Enter gießt um, Esc löscht)';
+  if (S.title) return S.title;
+  const dc = done();
+  if (S.tubes.some(t => locked(t, dc))) return 'Versiegelte Flaschen öffnen sich nach so vielen fertigen Farben.';
+  if (S.tubes.some(t => t.u.some(x => x.h))) return 'Verdeckte Schichten zeigen sich, sobald sie oben liegen.';
+  if (diff === 'easy' && S.level === 1 && !S.moves) return desktop ? 'Klicke Flasche und Ziel an, oder tippe 12 und Enter für Flasche 1 nach 2.' : 'Tippe eine Flasche an, dann das Ziel.';
+  return '';
+}
+function showNote() { clearTimeout(noteT); noteT = 0; $('note').textContent = baseNote(); }
+function parseMove(str, n) {
+  const parts = str.trim().split(/[\s-]+/).filter(Boolean);
+  let c = [];
+  if (parts.length === 2) c = [[+parts[0], +parts[1]]];
+  else if (parts.length === 1) { const d = parts[0]; for (let i = 1; i < d.length; i++) if (d[0] !== '0' && d[i] !== '0') c.push([+d.slice(0, i), +d.slice(i)]); }
+  return c.filter(([a, b]) => a >= 1 && b >= 1 && a <= n && b <= n && a !== b);
+}
+function runKb(str) {
+  const c = parseMove(str, S.tubes.length);
+  if (!c.length) { say('„' + str.trim() + '“ ist kein Zug. Beispiel: 12 gießt Flasche 1 in Flasche 2.'); return; }
+  if (c.length > 1) { say('Mehrdeutig. Trenne die Nummern mit Leerzeichen, zum Beispiel „1 12“.'); return; }
+  kq.push([c[0][0] - 1, c[0][1] - 1]);
+  if (kq.length === 1) pump();
+}
+const kq = [];
+function pump() {
+  if (!kq.length) return;
+  if (busy) { setTimeout(pump, 50); return; }
+  const [a, b] = kq[0];
+  clearHint();
+  if (sel >= 0) { tubeEl(sel).classList.remove('sel'); sel = -1; }
+  const k = a < S.tubes.length && b < S.tubes.length ? canPour(a, b) : 0;
+  if (!k) { kq.length = 0; if (b < S.tubes.length) shake(b); say('Von Flasche ' + (a + 1) + ' nach ' + (b + 1) + ' geht gerade nicht.'); return; }
+  pour(a, b, k);
+  kq.shift();
+  if (kq.length) setTimeout(pump, 50);
+}
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (!$('win').hidden) { if (e.key === 'Enter') { e.preventDefault(); $('nextLevel').click(); } return; }
+  if (/^[0-9]$/.test(e.key) || ((e.key === ' ' || e.key === '-') && kb)) { if (kb.length < 6) kb += e.key; }
+  else if (e.key === 'Backspace' && kb) kb = kb.slice(0, -1);
+  else if (e.key === 'Escape' && kb) kb = '';
+  else if (e.key === 'Enter' && kb) { e.preventDefault(); const str = kb; kb = ''; showNote(); runKb(str); return; }
+  else return;
+  e.preventDefault();
+  showNote();
+});
 let noteT = 0;
 function say(msg) {
   $('note').textContent = msg;
   clearTimeout(noteT);
-  noteT = setTimeout(() => { noteT = 0; render(); }, 2600);
+  noteT = setTimeout(() => { noteT = 0; $('note').textContent = baseNote(); }, 2600);
 }
 function clearHint() { clearTimeout(hintT); board.querySelectorAll('.hint').forEach(e => e.classList.remove('hint')); }
 
@@ -516,7 +590,7 @@ function pour(a, b, k) {
   setTimeout(() => {
     const sUnits = src.querySelectorAll('.unit'), dLiq = dst.querySelector('.liq'), stream = dst.querySelector('.stream');
     for (let i = 0; i < k; i++) sUnits[sUnits.length - 1 - i].classList.add('shrink');
-    for (let i = 0; i < k; i++) { const u = unitEl({ c: 0, h: false }); u.style.setProperty('--c', color); u.classList.add('grow'); dLiq.appendChild(u); }
+    for (let i = 0; i < k; i++) { const u = unitEl({ c: 0, h: false }, (S.fx || []).includes('pups') ? 'pup' : false); u.style.setProperty('--c', color); u.classList.add('grow'); dLiq.appendChild(u); }
     stream.style.setProperty('--c', color);
     stream.style.height = (100 - before * 100 / CAP) + '%';
     setTimeout(() => {
@@ -553,7 +627,7 @@ $('hint').onclick = () => {
   if (!path || !path.length) { say('Von hier geht es nicht weiter. Nimm Züge zurück oder starte neu.'); return; }
   if (sel >= 0) { tubeEl(sel).classList.remove('sel'); sel = -1; }
   tubeEl(path[0][0]).classList.add('hint'); tubeEl(path[0][1]).classList.add('hint');
-  say('Gieße das eine markierte Röhrchen in das andere.');
+  say('Gieße die eine markierte Flasche in die andere.');
   hintT = setTimeout(clearHint, 4000);
 };
 $('prev').onclick = () => { if (!busy && S.level > 1) load(S.level - 1); };
