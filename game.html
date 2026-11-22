@@ -61,8 +61,8 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 .moves { justify-self: end; text-align: right; font-size: 12px; color: var(--muted); font-weight: 500; }
 .moves b { display: block; color: var(--ink); font-family: var(--display); font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
 
-.tiers { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
-.tiers button { height: 36px; border-radius: 99px; font-size: 12.5px; font-weight: 700; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--hatch-b); }
+.tiers { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 10px; }
+.tiers button { height: 36px; border-radius: 99px; font-size: 11.5px; font-weight: 700; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--hatch-b); }
 .tiers button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); box-shadow: none; }
 .note { flex: none; min-height: 20px; margin-top: 6px; text-align: center; font-size: 13px; color: var(--muted); font-weight: 500; }
 
@@ -95,14 +95,14 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
   border-radius: 99px; background: linear-gradient(var(--shine), transparent); pointer-events: none;
 }
 .liq { position: absolute; inset: 14% 0 0; display: flex; flex-direction: column-reverse; }
-.unit { position: relative; flex: none; height: 25%; background: linear-gradient(90deg, color-mix(in srgb, var(--c), #000 22%), var(--c) 30%, var(--c) 70%, color-mix(in srgb, var(--c), #000 28%)); }
+.unit { position: relative; flex: none; height: var(--uh, 25%); background: linear-gradient(90deg, color-mix(in srgb, var(--c), #000 22%), var(--c) 30%, var(--c) 70%, color-mix(in srgb, var(--c), #000 28%)); }
 .unit:last-child::before { /* surface of the topmost layer */
   content: ""; position: absolute; left: 0; right: 0; top: calc(var(--tw) * -.09); height: calc(var(--tw) * .18);
   border-radius: 50%; background: color-mix(in srgb, var(--c), #fff 32%);
 }
 .unit.grow { animation: grow .22s linear both; }
 .unit.shrink { animation: grow .22s linear reverse both; }
-@keyframes grow { from { height: 0; } to { height: 25%; } }
+@keyframes grow { from { height: 0; } to { height: var(--uh, 25%); } }
 .unit.hid {
   background: repeating-linear-gradient(135deg, var(--hatch-a) 0 6px, var(--hatch-b) 6px 12px);
   display: grid; place-items: center;
@@ -160,7 +160,44 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 .swatches { display: flex; justify-content: center; gap: 6px; margin-bottom: 18px; }
 .swatches i { width: 14px; height: 30px; border-radius: 0 0 7px 7px; background: var(--c); }
 
+/* ---------- Labor: experiments ---------- */
+.board { position: relative; isolation: isolate; }
+.face { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; gap: calc(var(--tw) * .07); pointer-events: none; transform: translateY(-14%); }
+.eye { position: relative; width: calc(var(--tw) * .25); aspect-ratio: 1; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1.5px #10122e; animation: blink 4.5s var(--bd, 0s) infinite; }
+.eye i { position: absolute; left: 26%; top: 26%; width: 48%; height: 48%; border-radius: 50%; background: #10122e; transform: translate(var(--lx, 0px), var(--ly, 0px)); transition: transform .18s; }
+.mouth { position: absolute; left: 50%; top: 68%; width: calc(var(--tw) * .2); height: calc(var(--tw) * .09); margin-left: calc(var(--tw) * -.1); box-sizing: border-box; border: 2px solid #10122e; border-top: 0; border-radius: 0 0 99px 99px; transition: all .15s; }
+.tube.done .mouth { height: calc(var(--tw) * .15); background: #10122e; }
+.tube.sel .mouth, .tube.pour .mouth { width: calc(var(--tw) * .12); height: calc(var(--tw) * .12); margin-left: calc(var(--tw) * -.06); border-top: 2px solid #10122e; border-radius: 50%; }
+.tube.sel .eye, .tube.pour .eye { transform: scale(1.15); animation: none; }
+@keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.08); } }
+
+.fx-flip .slot { transform: scaleY(-1); }
+.fx-flip .unit.hid::after, .fx-flip .seal span { transform: scaleY(-1); }
+
+.fx-disco::before {
+  content: ""; position: absolute; z-index: -1; left: 50%; top: 50%; width: 150vmax; height: 150vmax; margin: -75vmax;
+  background: repeating-conic-gradient(from 0deg, #ff4fa3 0 8deg, transparent 8deg 30deg, #3ad6ff 30deg 38deg, transparent 38deg 60deg, #ffd23a 60deg 68deg, transparent 68deg 90deg);
+  opacity: .16; animation: spin 14s linear infinite; pointer-events: none;
+  -webkit-mask: radial-gradient(closest-side, #000 20%, transparent 70%); mask: radial-gradient(closest-side, #000 20%, transparent 70%);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.fx-disco .slot { animation: bop .6s var(--sd, 0s) ease-in-out infinite alternate; }
+@keyframes bop { to { transform: translateY(-7px) rotate(var(--sr, 2deg)); } }
+.fx-disco .glass { animation: neon 1.8s var(--sd, 0s) linear infinite; }
+@keyframes neon {
+  0%, 100% { box-shadow: 0 0 16px #ff4fa3; border-color: #ff8cc4; }
+  33% { box-shadow: 0 0 16px #3ad6ff; border-color: #8ce6ff; }
+  66% { box-shadow: 0 0 16px #ffd23a; border-color: #ffe48a; }
+}
+.fx-bubbles .unit:not(.hid)::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(rgba(255, 255, 255, .55) 1.6px, transparent 2.2px) 3px 0 / 17px 23px, radial-gradient(rgba(255, 255, 255, .4) 1.1px, transparent 1.7px) 11px 9px / 13px 19px;
+  animation: fizz 1.6s linear infinite;
+}
+@keyframes fizz { to { background-position: 3px -23px, 11px -10px; } }
+
 @media (prefers-reduced-motion: reduce) {
+  .fx-disco::before, .fx-disco .slot, .fx-disco .glass, .fx-bubbles .unit::after, .eye { animation: none !important; }
   .tube, .tube.pour { transition-duration: .01s; }
   .unit.grow, .unit.shrink, .tube.done::after, .sheet, .tube.hint .glass { animation-duration: .01s; }
 }
@@ -180,6 +217,7 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
   <button type="button" data-d="medium">Mittel</button>
   <button type="button" data-d="hard">Schwer</button>
   <button type="button" data-d="expert">Experte</button>
+  <button type="button" data-d="lab">Labor</button>
 </div>
 <div class="note" id="note" aria-live="polite"></div>
 
@@ -203,7 +241,7 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 <script>
 (() => {
 'use strict';
-const CAP = 4;
+let CAP = 4;
 const COLORS = ['#E5484D', '#F2913D', '#F4CF3A', '#3FAE6A', '#22B8C4', '#3B6FE0', '#8A55D8', '#EE6FB3', '#8B5E3C', '#A6D84A', '#C9D1DC', '#12766C'];
 const $ = id => document.getElementById(id);
 const board = $('board');
@@ -273,13 +311,24 @@ const TIERS = {
   easy:   { name: 'Leicht',  id: 1, pick: -1, spec: L => ({ colors: 3 + Math.min(2, Math.floor((L - 1) / 2)), hidden: false, locks: 0 }) },
   medium: { name: 'Mittel',  id: 2, pick: 0,  spec: L => ({ colors: 5 + Math.min(2, Math.floor((L - 1) / 3)), hidden: L % 2 === 0, locks: L % 3 === 0 ? 1 : 0 }) },
   hard:   { name: 'Schwer',  id: 3, pick: 1,  spec: L => ({ colors: 7 + Math.min(2, Math.floor((L - 1) / 3)), hidden: L % 3 !== 0, locks: L % 2 === 0 ? 2 : 1 }) },
-  expert: { name: 'Experte', id: 4, pick: 1,  spec: L => ({ colors: 10 + Math.min(2, Math.floor((L - 1) / 3)), hidden: true, locks: L % 2 === 0 ? 3 : 2 }) }
+  expert: { name: 'Experte', id: 4, pick: 1,  spec: L => ({ colors: 10 + Math.min(2, Math.floor((L - 1) / 3)), hidden: true, locks: L % 2 === 0 ? 3 : 2 }) },
+  lab:    { name: 'Labor',   id: 5, pick: 0,  spec: L => {
+    const up = Math.min(2, Math.floor((L - 1) / 5));
+    return [
+      { title: 'Glubschaugen: Die Farben schauen dir beim Sortieren zu.', colors: 5 + up, fx: ['eyes'] },
+      { title: 'Riesenflaschen: Hier passen sechs Schichten hinein.', colors: 4 + up, cap: 6, fx: ['eyes'] },
+      { title: 'Kopfstand: Heute hängt alles von der Decke.', colors: 6 + up, fx: ['eyes', 'flip'] },
+      { title: 'Zwergenparade: Viele Farben, nur drei Schichten pro Flasche.', colors: 9 + Math.min(1, up), cap: 3, fx: ['eyes'] },
+      { title: 'Disco: Es sprudelt, blinkt und wackelt.', colors: 7 + Math.min(1, up), hidden: true, locks: 1, fx: ['eyes', 'disco', 'bubbles'] }
+    ][(L - 1) % 5];
+  } }
 };
 function makeLevel(d, L) {
   const T = TIERS[d], s = T.spec(L), want = T.pick ? 4 : 1, found = [];
+  CAP = s.cap || 4;
   for (let attempt = 0; found.length < want; attempt++) {
     const r = rng(T.id * 1000003 + L * 7919 + attempt * 104729);
-    const locks = Math.max(0, s.locks - Math.floor(attempt / 20));
+    const locks = Math.max(0, (s.locks || 0) - Math.floor(attempt / 20));
     const units = [];
     for (let c = 0; c < s.colors; c++) for (let i = 0; i < CAP; i++) units.push(c);
     for (let i = units.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [units[i], units[j]] = [units[j], units[i]]; }
@@ -292,7 +341,7 @@ function makeLevel(d, L) {
     if (tubes.some(isFull)) continue;
     const path = solve(tubes, thr, 40000);
     if (!path) continue;
-    found.push({ tubes, thr, hidden: s.hidden, effort: path.nodes });
+    found.push({ tubes, thr, hidden: !!s.hidden, effort: path.nodes, cap: CAP, fx: s.fx || [], title: s.title || '' });
   }
   found.sort((x, y) => (x.effort - y.effort) * (T.pick || 1));
   return T.pick > 0 ? found[found.length - 1] : found[0];
@@ -304,7 +353,7 @@ const store = {
   set(v) { try { localStorage.setItem('pipetta', JSON.stringify(v)); } catch (e) {} }
 };
 let S = null;          // { level, tubes:[{u:[{c,h}], thr}], moves, hist:[] }
-let diff = 'easy', prog = { easy: 1, medium: 1, hard: 1, expert: 1 }, sel = -1, busy = false, hintT = 0;
+let diff = 'easy', prog = { easy: 1, medium: 1, hard: 1, expert: 1, lab: 1 }, sel = -1, busy = false, hintT = 0;
 
 const cols = t => t.u.map(x => x.c);
 const allCols = () => S.tubes.map(cols);
@@ -321,10 +370,10 @@ function reveal() {
   }
 }
 function load(L, saved) {
-  if (saved) S = saved;
+  if (saved) { S = saved; CAP = S.cap || 4; }
   else {
     const lv = makeLevel(diff, L);
-    S = { diff, level: L, moves: 0, hist: [], tubes: lv.tubes.map((a, i) => ({ thr: lv.thr[i], u: a.map(c => ({ c, h: lv.hidden })) })) };
+    S = { diff, level: L, cap: lv.cap, fx: lv.fx, title: lv.title, moves: 0, hist: [], tubes: lv.tubes.map((a, i) => ({ thr: lv.thr[i], u: a.map(c => ({ c, h: lv.hidden })) })) };
     reveal();
   }
   sel = -1; busy = false;
@@ -336,11 +385,13 @@ let saves = {};
 
 /* ---------- rendering ---------- */
 function layout() {
-  const n = S.tubes.length, rows = Math.ceil(n / 5), per = Math.ceil(n / rows);
+  const n = S.tubes.length, rows = Math.ceil(n / 5), per = Math.ceil(n / rows), fx = S.fx || [];
+  board.className = 'board' + fx.map(f => ' fx-' + f).join('');
+  board.style.setProperty('--uh', 100 / CAP + '%');
   const W = board.clientWidth, H = board.clientHeight;
   const cg = 16, rg = 38;
   const tw = Math.floor(Math.min(58, (W - cg * (per - 1) - 10) / per));
-  let th = Math.floor(Math.min(tw * 3.3, (H - rg * (rows - 1) - 50) / rows));
+  let th = Math.floor(Math.min(tw * (CAP === 6 ? 4.3 : CAP === 3 ? 2.8 : 3.3), (H - rg * (rows - 1) - 50) / rows));
   board.style.setProperty('--tw', tw + 'px');
   board.style.setProperty('--th', th + 'px');
   board.style.setProperty('--cg', cg + 'px');
@@ -350,6 +401,7 @@ function layout() {
     const row = document.createElement('div'); row.className = 'row';
     for (let i = r * per; i < Math.min(n, (r + 1) * per); i++) {
       const slot = document.createElement('div'); slot.className = 'slot';
+      slot.style.setProperty('--sd', (-(i * 0.37) % 1.8) + 's'); slot.style.setProperty('--sr', (i % 2 ? 2.5 : -2.5) + 'deg');
       slot.innerHTML = '<button type="button" class="tube" data-i="' + i + '"><span class="neck"></span><span class="glass"><span class="liq"></span><span class="stream"></span></span></button>';
       row.appendChild(slot);
     }
@@ -357,18 +409,30 @@ function layout() {
   }
 }
 const tubeEl = i => board.querySelector('.tube[data-i="' + i + '"]');
-function unitEl(x) {
+function unitEl(x, face) {
   const d = document.createElement('span');
   d.className = 'unit' + (x.h ? ' hid' : '');
   d.style.setProperty('--c', COLORS[x.c]);
+  if (face) { d.innerHTML = '<i class="face"><i class="eye"><i></i></i><i class="eye"><i></i></i><i class="mouth"></i></i>'; d.style.setProperty('--bd', -((x.c * 1.3) % 4.5) + 's'); }
   return d;
 }
+function lookAt() {
+  const flip = (S.fx || []).includes('flip');
+  S.tubes.forEach((t, i) => {
+    const el = tubeEl(i);
+    if (sel < 0 || sel === i) { el.style.removeProperty('--lx'); el.style.removeProperty('--ly'); return; }
+    const a = el.parentNode.getBoundingClientRect(), b = tubeEl(sel).parentNode.getBoundingClientRect();
+    const dx = b.left - a.left, dy = b.top - a.top, d = Math.hypot(dx, dy) || 1, r = a.width * .045;
+    el.style.setProperty('--lx', (dx / d * r).toFixed(1) + 'px');
+    el.style.setProperty('--ly', ((flip ? -dy : dy) / d * r).toFixed(1) + 'px');
+  });
+}
 function render() {
-  const dc = done();
+  const dc = done(), eyes = (S.fx || []).includes('eyes');
   S.tubes.forEach((t, i) => {
     const el = tubeEl(i), glass = el.querySelector('.glass'), liq = glass.firstChild;
-    liq.replaceChildren(...t.u.map(unitEl));
     const lk = locked(t, dc);
+    liq.replaceChildren(...t.u.map((x, j) => unitEl(x, eyes && !lk && !x.h && (j === t.u.length - 1 || t.u[j + 1].c !== x.c))));
     let seal = glass.querySelector('.seal');
     if (lk && !seal) { seal = document.createElement('span'); seal.className = 'seal'; seal.innerHTML = '<span></span>'; glass.appendChild(seal); }
     if (!lk && seal) seal.remove();
@@ -385,7 +449,8 @@ function render() {
   $('undo').disabled = !S.hist.length;
   const anyLock = S.tubes.some(t => locked(t, dc));
   const anyHid = S.tubes.some(t => t.u.some(x => x.h));
-  if (!noteT) $('note').textContent = anyLock ? 'Versiegelte Röhrchen öffnen sich nach so vielen fertigen Farben.'
+  lookAt();
+  if (!noteT) $('note').textContent = S.title ? S.title : anyLock ? 'Versiegelte Röhrchen öffnen sich nach so vielen fertigen Farben.'
     : anyHid ? 'Verdeckte Schichten zeigen sich, sobald sie oben liegen.'
     : diff === 'easy' && S.level === 1 && !S.moves ? 'Tippe ein Röhrchen an, dann das Ziel.' : '';
 }
@@ -415,15 +480,16 @@ function tap(i) {
   if (sel < 0) {
     if (locked(t, dc)) { shake(i); say('Noch ' + (t.thr - dc) + ' fertige Farbe' + (t.thr - dc > 1 ? 'n' : '') + ', dann öffnet es sich.'); return; }
     if (!t.u.length || isFull(cols(t))) return;
-    sel = i; tubeEl(i).classList.add('sel');
+    sel = i; tubeEl(i).classList.add('sel'); lookAt();
     return;
   }
-  if (i === sel) { sel = -1; tubeEl(i).classList.remove('sel'); return; }
+  if (i === sel) { sel = -1; tubeEl(i).classList.remove('sel'); lookAt(); return; }
   const k = canPour(sel, i);
   if (!k) {
     shake(i);
     tubeEl(sel).classList.remove('sel'); sel = -1;
     if (!locked(t, dc) && t.u.length && !isFull(cols(t))) { sel = i; tubeEl(i).classList.add('sel'); }
+    lookAt();
     return;
   }
   pour(sel, i, k);
@@ -442,7 +508,8 @@ function pour(a, b, k) {
   const src = tubeEl(a), dst = tubeEl(b);
   const sr = src.parentNode.getBoundingClientRect(), dr = dst.parentNode.getBoundingClientRect(), br = board.getBoundingClientRect();
   const tw = sr.width, dir = (dr.left + tw / 2) > (br.left + br.width / 2) ? 1 : -1;
-  const dx = dr.left - sr.left + dir * tw * .1, dy = dr.top - sr.top - tw * .5 - 12;
+  const flip = (S.fx || []).includes('flip');
+  const dx = dr.left - sr.left + dir * tw * .1, dy = (flip ? sr.top - dr.top : dr.top - sr.top) - tw * .5 - 12;
   src.classList.remove('sel'); src.classList.add('pour');
   src.style.transform = 'translate(' + dx + 'px,' + dy + 'px) rotate(' + dir * 100 + 'deg)';
 
@@ -451,7 +518,7 @@ function pour(a, b, k) {
     for (let i = 0; i < k; i++) sUnits[sUnits.length - 1 - i].classList.add('shrink');
     for (let i = 0; i < k; i++) { const u = unitEl({ c: 0, h: false }); u.style.setProperty('--c', color); u.classList.add('grow'); dLiq.appendChild(u); }
     stream.style.setProperty('--c', color);
-    stream.style.height = (100 - before * 25) + '%';
+    stream.style.height = (100 - before * 100 / CAP) + '%';
     setTimeout(() => {
       stream.style.height = '0';
       src.style.transform = '';
