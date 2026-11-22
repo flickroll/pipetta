@@ -159,6 +159,7 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 .sheet h2 { font-family: var(--display); font-weight: 700; font-size: 30px; margin: 0 0 6px; letter-spacing: -.02em; text-wrap: balance; }
 .sheet p { margin: 0 0 22px; color: var(--muted); font-size: 15px; }
 .sheet button { width: 100%; height: 56px; border-radius: 18px; background: var(--ink); color: var(--on-ink); font-weight: 700; font-size: 16px; }
+.sheet button.ghost { margin-top: 10px; background: none; color: var(--ink); box-shadow: inset 0 0 0 2px var(--rim); }
 .swatches { display: flex; justify-content: center; gap: 6px; margin-bottom: 18px; }
 .swatches i { width: 14px; height: 30px; border-radius: 0 0 7px 7px; background: var(--c); }
 
@@ -254,6 +255,15 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
   </div>
 </div>
 
+<div class="win" id="stuck" hidden>
+  <div class="sheet">
+    <h2>Nichts geht mehr</h2>
+    <p id="stuckText"></p>
+    <button id="rewind" type="button">Zurück zum letzten lösbaren Stand</button>
+    <button id="stuckRestart" type="button" class="ghost">Level neu starten</button>
+  </div>
+</div>
+
 <script>
 (() => {
 'use strict';
@@ -313,7 +323,7 @@ function solve(start, thr, limit) {
     }
     return false;
   }
-  if (!rec()) return null;
+  if (!rec()) { solve.gaveUp = nodes > limit; return null; }
   const out = path.slice(); out.nodes = nodes; return out;
 }
 
@@ -394,7 +404,7 @@ function load(L, saved) {
     reveal();
   }
   sel = -1; busy = false; kq.length = 0;
-  $('win').hidden = true;
+  $('win').hidden = true; $('stuck').hidden = true;
   layout(); render(); persist();
 }
 function persist() { saves[diff] = S; store.set({ v: 2, diff, prog, saves }); }
@@ -510,6 +520,7 @@ function pump() {
 document.addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (!$('win').hidden) { if (e.key === 'Enter') { e.preventDefault(); $('nextLevel').click(); } return; }
+  if (!$('stuck').hidden) { if (e.key === 'Enter') { e.preventDefault(); $('rewind').click(); } return; }
   if (/^[0-9]$/.test(e.key) || ((e.key === ' ' || e.key === '-') && kb)) { if (kb.length < 6) kb += e.key; }
   else if (e.key === 'Backspace' && kb) kb = kb.slice(0, -1);
   else if (e.key === 'Escape' && kb) kb = '';
@@ -586,20 +597,39 @@ function pour(a, b, k) {
     setTimeout(() => {
       stream.style.height = '0';
       src.style.transform = '';
-      setTimeout(() => { busy = false; render(); checkWin(); }, 190);
+      setTimeout(() => { busy = false; render(); if (!checkWin()) checkStuck(); }, 190);
     }, 230);
   }, 200);
 }
 
 function checkWin() {
-  if (!S.tubes.every(t => !t.u.length || isFull(cols(t)))) return;
+  if (!S.tubes.every(t => !t.u.length || isFull(cols(t)))) return false;
   if (S.level >= prog[diff]) prog[diff] = S.level + 1;
   S.hist = []; persist();
   $('swatches').innerHTML = S.tubes.filter(t => t.u.length).map(t => '<i style="--c:' + COLORS[t.u[0].c] + '"></i>').join('');
   $('winText').textContent = TIERS[diff].name + ', Level ' + S.level + ' in ' + S.moves + ' Zügen gelöst.';
   $('nextLevel').textContent = 'Weiter zu Level ' + (S.level + 1);
   $('win').hidden = false;
+  return true;
 }
+const solvable = () => !!solve(allCols(), allThr(), 60000) || solve.gaveUp;
+function checkStuck() {
+  if (solvable()) return;
+  let any = false;
+  for (let a = 0; a < S.tubes.length && !any; a++) for (let b = 0; b < S.tubes.length; b++) if (canPour(a, b)) { any = true; break; }
+  $('stuckText').textContent = any ? 'Von diesem Stand aus lässt sich das Level nicht mehr lösen.' : 'Es ist kein Zug mehr möglich.';
+  kq.length = 0;
+  $('stuck').hidden = false;
+}
+$('rewind').onclick = () => {
+  let steps = 0;
+  while (S.hist.length) { S.tubes = JSON.parse(S.hist.pop()); steps++; if (solvable()) break; }
+  S.moves += steps; sel = -1;
+  $('stuck').hidden = true;
+  render(); persist();
+  say(steps + (steps === 1 ? ' Zug' : ' Züge') + ' zurückgenommen. Von hier ist das Level wieder lösbar.');
+};
+$('stuckRestart').onclick = () => load(S.level);
 
 /* ---------- controls ---------- */
 board.addEventListener('click', e => { const t = e.target.closest('.tube'); if (t) tap(+t.dataset.i); });
