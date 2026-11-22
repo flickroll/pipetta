@@ -587,6 +587,10 @@ function pour(a, b, k) {
   S.moves++;
   reveal(); persist();
 
+  try { pourAnim(a, b, k, cIdx, color, before, srcBefore); }
+  catch (e) { board.querySelectorAll('.pstream, .pdrop').forEach(x => x.remove()); busy = false; render(); if (!checkWin()) checkStuck(); }
+}
+function pourAnim(a, b, k, cIdx, color, before, srcBefore) {
   /* Geometry. Each tube rotates around the centre of its rim (transform-origin 50% 0),
      so the pivot is also the lip the liquid leaves from. In the upside-down level every
      slot is mirrored vertically, so "down" on screen is "up" for the tube. */
@@ -603,7 +607,8 @@ function pour(a, b, k) {
   const a0 = ang(srcBefore), a1 = ang(srcBefore - k);
   const wasSel = src.classList.contains('sel');
 
-  const m = reduceMotion ? .05 : 1;
+  /* "Reduce motion" (common on iPhones) keeps the pour, just a bit calmer: no overshoot, no splash. */
+  const m = reduceMotion ? .85 : 1;
   const T1 = 300 * m, FALL = 90 * m, P = (170 + 115 * k) * m, DET = 150 * m, T3 = 340 * m, total = T1 + P + T3;
 
   /* stream: from the lip down to the target's liquid surface */
@@ -626,7 +631,7 @@ function pour(a, b, k) {
   const tubeAnim = src.animate([
     { offset: 0, transform: wasSel ? 'translate(0px, -16px) rotate(0deg)' : rest, easing: 'cubic-bezier(.45, 0, .2, 1)' },
     { offset: T1 / total, transform: 'translate(' + dx + 'px, ' + dy + 'px) rotate(' + a0 + 'deg)', easing: 'cubic-bezier(.35, 0, .65, 1)' },
-    { offset: (T1 + P) / total, transform: 'translate(' + dx + 'px, ' + dy + 'px) rotate(' + a1 + 'deg)', easing: 'cubic-bezier(.3, 1.22, .5, 1)' },
+    { offset: (T1 + P) / total, transform: 'translate(' + dx + 'px, ' + dy + 'px) rotate(' + a1 + 'deg)', easing: reduceMotion ? 'cubic-bezier(.4, 0, .2, 1)' : 'cubic-bezier(.3, 1.22, .5, 1)' },
     { offset: 1, transform: rest }
   ], { duration: total, fill: 'forwards' });
   const anims = [tubeAnim];
