@@ -231,8 +231,38 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 }
 @keyframes fizz { to { background-position: 3px -23px, 11px -10px; } }
 
+/* Hundi's Weihnachten: snow, warm gold rims, candy-cane necks, a Santa hat for the dog and string lights around the screen edge */
+body.xmas {
+  --bg: #071029; --glow: #3B1430; --dot: #DCE6FF; --rim: #E9C46A; --panel: #13203F;
+  --hatch-a: #1B2B52; --hatch-b: #26396A; --seal-a: #5A1A2A; --seal-b: #74243A;
+  padding-top: 26px; padding-bottom: 26px;
+  padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px));
+}
+body.xmas::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .55;
+  background-image: radial-gradient(#fff 1.3px, transparent 1.9px), radial-gradient(rgba(255, 255, 255, .75) 1px, transparent 1.5px), radial-gradient(rgba(255, 255, 255, .5) 2.1px, transparent 2.7px);
+  background-size: 90px 110px, 130px 150px, 210px 230px;
+  background-position: 10px 0, 60px 40px, 120px 90px;
+  animation: snow 22s linear infinite;
+}
+@keyframes snow { to { background-position: 100px 440px, 60px 340px, 120px 320px; } }
+.xmas .glass { box-shadow: 0 0 16px rgba(233, 196, 106, .22); }
+.xmas .tube::before { background: repeating-linear-gradient(-45deg, #E63946 0 5px, #FFF6EC 5px 10px); }
+.xmas .tiers button[aria-pressed="true"] { background: #D62839; color: #fff; }
+.xmas .tiers [data-d="dogs"]::after { content: " 🎄"; }
+.xmas .fx-pups .tube.done::after { content: "Wuff! 🎄"; background: #D62839; color: #fff; }
+.xmas .dog:not(.toy)::after {
+  content: ""; position: absolute; left: 34%; top: -44%; width: 78%; aspect-ratio: 1; rotate: 18deg; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M5 30 C9 16 17 6 29 7 C33 8 35 14 34 20 C31 15 27 14 25 17 C30 20 33 25 35 30 Z' fill='%23D62839'/%3E%3Cpath d='M25 17 C29 19 32 23 34 28 L35 30 L31 30 C30 25 28 21 25 17 Z' fill='%23A81D2C'/%3E%3Crect x='2' y='28' width='36' height='8' rx='4' fill='%23FFF6EC'/%3E%3Ccircle cx='34' cy='20' r='4.5' fill='%23FFF6EC'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.lights { position: fixed; z-index: 15; pointer-events: none; top: env(safe-area-inset-top, 0px); bottom: env(safe-area-inset-bottom, 0px); left: env(safe-area-inset-left, 0px); right: env(safe-area-inset-right, 0px); }
+.lights svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.lights .b { animation: twinkle 1.6s var(--d, 0s) ease-in-out infinite alternate; }
+.lights .g { filter: blur(3px); }
+@keyframes twinkle { from { opacity: 1; } to { opacity: .35; } }
+
 @media (prefers-reduced-motion: reduce) {
-  .fx-disco::before, .fx-disco .slot, .fx-disco .glass, .fx-bubbles .unit::after, .eye, .dog { animation: none !important; }
+  .fx-disco::before, .fx-disco .slot, .fx-disco .glass, .fx-bubbles .unit::after, .eye, .dog, body.xmas::before, .lights .b { animation: none !important; }
   .tube, .tube.pour { transition-duration: .01s; }
   .tube.done::after, .sheet, .tube.hint .glass { animation-duration: .01s; }
 }
@@ -259,6 +289,7 @@ button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 <div class="note" id="note" aria-live="polite"></div>
 
 <main class="board" id="board"></main>
+<div class="lights" id="lights" aria-hidden="true" hidden></div>
 
 <nav class="actions">
   <button id="undo" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 010 12"/></svg>Zurück</button>
@@ -436,6 +467,7 @@ let saves = {};
 function layout() {
   const n = S.tubes.length, rows = Math.ceil(n / 5), per = Math.ceil(n / rows), fx = S.fx || [];
   board.className = 'board' + fx.map(f => ' fx-' + f).join('');
+  const xmas = fx.includes('pups'); document.body.classList.toggle('xmas', xmas); lights(xmas);
   board.style.setProperty('--uh', 100 / CAP + '%');
   const W = board.clientWidth, H = board.clientHeight;
   const cg = 16, rg = 38, dogs = fx.includes('pups');
@@ -456,6 +488,34 @@ function layout() {
     }
     board.appendChild(row);
   }
+}
+/* string lights along the four screen edges: a sagging wire with a bulb in every sag, pointing inwards */
+const LIGHT_COLORS = ['#FF4D5E', '#FFD23F', '#3DDC84', '#4DA3FF', '#FF8BD1'];
+let lightsKey = '';
+function lights(on) {
+  const box = $('lights');
+  box.hidden = !on;
+  if (!on) return;
+  const W = box.clientWidth, H = box.clientHeight, key = W + 'x' + H;
+  if (!W || !H || key === lightsKey) return;
+  lightsKey = key;
+  const m = 5, sag = 9, gap = 34;
+  const edges = [[m, m, W - m, m, 0], [W - m, m, W - m, H - m, 90], [W - m, H - m, m, H - m, 180], [m, H - m, m, m, -90]];
+  let wire = 'M' + m + ' ' + m, bulbs = '', k = 0;
+  for (const [x1, y1, x2, y2, a] of edges) {
+    const len = Math.hypot(x2 - x1, y2 - y1), n = Math.max(1, Math.round(len / gap));
+    const nx = -Math.sin(a * Math.PI / 180), ny = Math.cos(a * Math.PI / 180);
+    for (let i = 0; i < n; i++) {
+      const ax = x1 + (x2 - x1) * i / n, ay = y1 + (y2 - y1) * i / n, bx = x1 + (x2 - x1) * (i + 1) / n, by = y1 + (y2 - y1) * (i + 1) / n;
+      const cx = (ax + bx) / 2 + nx * sag, cy = (ay + by) / 2 + ny * sag;
+      wire += ' Q' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + bx.toFixed(1) + ' ' + by.toFixed(1);
+      const px = ((ax + bx) / 2 + nx * sag / 2).toFixed(1), py = ((ay + by) / 2 + ny * sag / 2).toFixed(1), c = LIGHT_COLORS[k % LIGHT_COLORS.length];
+      bulbs += '<g transform="translate(' + px + ' ' + py + ') rotate(' + a + ')"><rect x="-2.2" y="-1" width="4.4" height="4.5" rx="1" fill="#2F4A3A"/>'
+        + '<g class="b" style="--d:' + (-((k * 0.53) % 1.6)).toFixed(2) + 's"><circle class="g" cy="9" r="8" fill="' + c + '" opacity=".55"/><ellipse cy="9" rx="3.8" ry="5.6" fill="' + c + '"/><ellipse cx="-1.2" cy="7" rx="1" ry="1.8" fill="#fff" opacity=".7"/></g></g>';
+      k++;
+    }
+  }
+  box.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><path d="' + wire + '" fill="none" stroke="#3E6B4F" stroke-width="1.6"/>' + bulbs + '</svg>';
 }
 const tubeEl = i => board.querySelector('.tube[data-i="' + i + '"]');
 function unitEl(x, face) {
